@@ -1,0 +1,29 @@
+{
+  "accounts": [
+    {
+      "server": "ЯКУТСК",
+      "nick": "Timur_Salvadore",
+      "pwd": "timr5555"
+    },
+    {
+      "server": "ТАШКЕНТ",
+      "nick": "Timur_Salvadore",
+      "pwd": "timr5555"
+    },
+    {
+      "server": "ТАШКЕНТ",
+      "nick": "Timur_Salvador",
+      "pwd": "timr5555"
+    },
+    {
+      "server": "ЯКУТСК",
+      "nick": "Dorri_Fa",
+      "pwd": "676767"
+    },
+    {
+      "server": "ЧЕРЕПОВЕЦ",
+      "nick": "Dorra_Gi",
+      "pwd": "676767"
+    }
+  ]
+}

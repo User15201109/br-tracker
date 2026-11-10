@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BR Ultimate Tracker</title>
+    <!-- ПОДКЛЮЧЕНИЕ СТИЛЕЙ BOOTSTRAP (ДИЗАЙН) -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --bg-color: #121212; --card-bg: #1e1e1e; --text-color: #e0e0e0; --border-color: #333; --primary: #0d6efd; --accent: #00ffcc;
+        }
+        [data-theme="light"] {
+            --bg-color: #f4f6f9; --card-bg: #ffffff; --text-color: #212529; --border-color: #dee2e6; --primary: #0d6efd; --accent: #6c757d;
+        }
+        [data-theme="cyberpunk"] {
+            --bg-color: #000000; --card-bg: #111111; --text-color: #00ffcc; --border-color: #ff00ff; --primary: #ff00ff; --accent: #00ffcc;
+        }
+        [data-theme="blood"] {
+            --bg-color: #110000; --card-bg: #220000; --text-color: #ffcccc; --border-color: #440000; --primary: #cc0000; --accent: #ff4444;
+        }
+        [data-theme="matrix"] {
+            --bg-color: #000a00; --card-bg: #001a00; --text-color: #00ff00; --border-color: #003300; --primary: #00aa00; --accent: #00ff00;
+        }
+        [data-theme="ocean"] {
+            --bg-color: #001f3f; --card-bg: #003366; --text-color: #e0f7fa; --border-color: #00509e; --primary: #007bff; --accent: #00bcd4;
+        }
+
+        body { background-color: var(--bg-color); color: var(--text-color); font-size: 14px; transition: 0.3s; }
+        .card { background-color: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 10px; margin-bottom: 20px; }
+        .table { color: var(--text-color); margin-bottom: 0; }
+        .table-hover tbody tr:hover { background-color: var(--border-color); color: var(--text-color); }
+        .form-control, .form-select { background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-color); }
+        .form-control:focus, .form-select:focus { background-color: var(--card-bg); color: var(--text-color); border-color: var(--primary); box-shadow: 0 0 5px var(--primary); }
+        .navbar { background-color: var(--card-bg); border-bottom: 2px solid var(--primary); }
+        .navbar-brand { color: var(--primary) !important; }
+        
+        /* СТИЛИ ДЛЯ ВКЛАДОК */
+        .nav-pills .nav-link { color: var(--text-color); opacity: 0.7; border-radius: 5px; }
+        .nav-pills .nav-link:hover { opacity: 1; }
+        .nav-pills .nav-link.active { background-color: var(--primary) !important; color: #fff !important; opacity: 1; font-weight: bold; }
+        
+        .stat-value { font-size: 22px; font-weight: bold; }
+        .sticky-top { top: 10px; z-index: 100; }
+    </style>
+</head>
+<body data-theme="{{ theme }}">
+
+    <nav class="navbar navbar-expand-lg mb-4 sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-diamond-fill"></i> BR Ultimate</a>
+            <div class="d-flex gap-3 align-items-center">
+                <form action="/change_theme" method="POST" class="d-flex align-items-center m-0">
+                    <label class="me-2 text-muted small">Тема:</label>
+                    <select name="theme" class="form-select form-select-sm" onchange="this.form.submit()" style="width: 130px;">
+                        <option value="dark" {% if theme == 'dark' %}selected{% endif %}>Тёмная</option>
+                        <option value="light" {% if theme == 'light' %}selected{% endif %}>Светлая</option>
+                        <option value="cyberpunk" {% if theme == 'cyberpunk' %}selected{% endif %}>Киберпанк</option>
+                        <option value="blood" {% if theme == 'blood' %}selected{% endif %}>Кровавая</option>
+                        <option value="matrix" {% if theme == 'matrix' %}selected{% endif %}>Матрица</option>
+                        <option value="ocean" {% if theme == 'ocean' %}selected{% endif %}>Океан</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        
+        <!-- ДАШБОРД -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3"><div class="card p-3 text-center"><small class="text-muted">Склад</small><div class="stat-value text-primary">{{ total_virts }} кк</div></div></div>
+            <div class="col-md-3"><div class="card p-3 text-center"><small class="text-muted">Выручка</small><div class="stat-value text-success">{{ total_money|round(0) }} ₽</div></div></div>
+            <div class="col-md-3"><div class="card p-3 text-center"><small class="text-muted">Расходы</small><div class="stat-value text-danger">{{ total_exp|round(0) }} ₽</div></div></div>
+            <div class="col-md-3"><div class="card p-3 text-center"><small class="text-muted">Чистыми</small><div class="stat-value text-warning">{{ net_profit|round(0) }} ₽</div></div></div>
+        </div>
+
+        <!-- ВКЛАДКИ -->
+        <ul class="nav nav-pills mb-4 flex-nowrap overflow-auto" id="pills-tab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="pills-sklad-tab" data-bs-toggle="pill" data-bs-target="#tab-sklad" type="button" role="tab">Склад</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-accs-tab" data-bs-toggle="pill" data-bs-target="#tab-accs" type="button" role="tab">Акки</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-base-tab" data-bs-toggle="pill" data-bs-target="#tab-base" type="button" role="tab">Пароли</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-assort-tab" data-bs-toggle="pill" data-bs-target="#tab-assort" type="button" role="tab">Ассортимент</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-expenses-tab" data-bs-toggle="pill" data-bs-target="#tab-expenses" type="button" role="tab">Расходы</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-notes-tab" data-bs-toggle="pill" data-bs-target="#tab-notes" type="button" role="tab">Блокнот</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-blacklist-tab" data-bs-toggle="pill" data-bs-target="#tab-blacklist" type="button" role="tab">Бан</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pills-sales-tab" data-bs-toggle="pill" data-bs-target="#tab-sales" type="button" role="tab">Продажи</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="pills-tabContent">
+            
+            <!-- 1. СКЛАД -->
+            <div class="tab-pane fade show active" id="tab-sklad" role="tabpanel">
+                <div class="row g-3">
+                    <div class="col-md-8">
+                        <div class="card p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h6 class="mb-0">Склад виртов</h6>
+                                <a href="/export" class="btn btn-sm btn-outline-success"><i class="bi bi-download"></i> CSV</a>
+                            </div>
+                            <form action="/update_virts" method="POST" class="row g-2 mb-3">
+                                <div class="col-4"><input type="text" name="server" class="form-control form-control-sm" placeholder="Сервер" required></div>
+                                <div class="col-2"><input type="number" step="0.1" name="amount" class="form-control form-control-sm" placeholder="кк" required></div>
+                                <div class="col-3"><select name="action" class="form-select form-select-sm"><option value="add">+</option><option value="remove">-</option><option value="set">=</option></select></div>
+                                <div class="col-3"><button type="submit" class="btn btn-sm btn-primary w-100">ОК</button></div>
+                            </form>
+                            <table class="table table-hover table-sm align-middle">
+                                <thead><tr><th>Сервер</th><th>Вирты</th><th class="text-end">Продать</th></tr></thead>
+                                <tbody>
+                                    {% for server, info in virts.items() %}
+                                    <tr>
+                                        <td><b>{{ server }}</b></td>
+                                        <td><span class="badge bg-success">{{ info.virts }} кк</span></td>
+                                        <td class="text-end">
+                                            <form action="/sell_virts" method="POST" class="d-inline-flex gap-1">
+                                                <input type="hidden" name="server" value="{{ server }}">
+                                                <input type="number" step="0.1" name="amount" class="form-control form-control-sm" style="width: 60px;" placeholder="кк" required>
+                                                <input type="number" step="1" name="price" class="form-control form-control-sm" style="width: 60px;" placeholder="₽/кк" required>
+                                                <button type="submit" class="btn btn-sm btn-success"><i class="bi bi-cash"></i></button>
+                                            </form>
+                                            <a href="/delete_virts/{{ server }}" class="btn btn-sm btn-outline-danger ms-1"><i class="bi bi-x"></i></a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card p-3">
+                            <h6 class="text-info">Генератор</h6>
+                            <input type="text" id="genServer" class="form-control form-control-sm mb-2" placeholder="Сервер" oninput="genAd()">
+                            <div class="d-flex gap-2 mb-2">
+                                <input type="number" id="genAmount" class="form-control form-control-sm" placeholder="кк" oninput="genAd()">
+                                <input type="number" id="genPrice" class="form-control form-control-sm" placeholder="₽" oninput="genAd()">
+                            </div>
+                            <textarea id="adResult" class="form-control form-control-sm" rows="4" readonly></textarea>
+                            <button class="btn btn-sm btn-outline-info w-100 mt-2" onclick="copyAd()">Скопировать</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. АККИ -->
+            <div class="tab-pane fade" id="tab-accs" role="tabpanel">
+                <div class="card p-3">
+                    <h6>Аккаунты на продажу</h6>
+                    <p class="text-muted small">Здесь пока пусто. Добавь форму, если нужно.</p>
+                </div>
+            </div>
+
+            <!-- 3. ПАРОЛИ -->
+            <div class="tab-pane fade" id="tab-base" role="tabpanel">
+                <div class="card p-3">
+                    <h6>База паролей</h6>
+                    <p class="text-muted small">Здесь пока пусто.</p>
+                </div>
+            </div>
+
+            <!-- 4. АССОРТИМЕНТ -->
+            <div class="tab-pane fade" id="tab-assort" role="tabpanel">
+                <div class="card p-3">
+                    <h6>Ассортимент</h6>
+                    <p class="text-muted small">Здесь пока пусто.</p>
+                </div>
+            </div>
+
+            <!-- 5. РАСХОДЫ -->
+            <div class="tab-pane fade" id="tab-expenses" role="tabpanel">
+                <div class="card p-3">
+                    <h6>Расходы</h6>
+                    <p class="text-muted small">Здесь пока пусто.</p>
+                </div>
+            </div>
+
+            <!-- 6. БЛОКНОТ -->
+            <div class="tab-pane fade" id="tab-notes" role="tabpanel">
+                <div class="card p-3">
+                    <h6>Блокнот</h6>
+                    <p class="text-muted small">Здесь пока пусто.</p>
+                </div>
+            </div>
+
+            <!-- 7. БАН -->
+            <div class="tab-pane fade" id="tab-blacklist" role="tabpanel">
+                <div class="card p-3">
+                    <h6>Блэклист</h6>
+                    <p class="text-muted small">Здесь пока пусто.</p>
+                </div>
+            </div>
+
+            <!-- 8. ПРОДАЖИ -->
+            <div class="tab-pane fade" id="tab-sales" role="tabpanel">
+                <div class="card p-3">
+                    <h6>Продажи</h6>
+                    <p class="text-muted small">Здесь пока пусто.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ПОДКЛЮЧЕНИЕ JS BOOTSTRAP (ОТВЕЧАЕТ ЗА ВКЛАДКИ!) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function genAd() {
+            let s = document.getElementById('genServer').value.toUpperCase() || '[СЕРВЕР]';
+            let a = document.getElementById('genAmount').value || '0';
+            let p = document.getElementById('genPrice').value || '0';
+            document.getElementById('adResult').value = `🎮 Вирты BR | 🏙️ ${s}\n💰 В наличии: ${a} кк\n💵 Цена: ${p} ₽ за 1 кк\n✅ Через банк.`;
+        }
+        function copyAd() {
+            let copyText = document.getElementById("adResult");
+            copyText.select();
+            document.execCommand("copy");
+            alert("Скопировано!");
+        }
+    </script>
+</body>
+</html>
